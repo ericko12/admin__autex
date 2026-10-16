@@ -1,8 +1,50 @@
 import { Link } from 'react-router';
-import { Facebook, Instagram, MessageCircle } from 'lucide-react';
+import { Facebook, Globe, Instagram, MessageCircle } from 'lucide-react';
 import autexLogo from 'figma:asset/e4a51ee4a49c3f2fe023ab4e73b1a904ebde460b.png';
+import { CONFIG_SOLO_FIJOS, ENLACE_LOCALIZA_TIENDA, useFooter } from '../context/FooterContext';
+import type { FooterLink } from '../context/FooterContext';
+import { esDestinoInterno, soloDigitos } from '../utils/footerValidation';
+
+/** Enlaces internos: misma pestaña. Externos: pestaña nueva. */
+function EnlaceFooter({ enlace }: { enlace: FooterLink }) {
+  if (esDestinoInterno(enlace.url)) {
+    return (
+      <Link to={enlace.url} className="hover:text-blue-600">
+        {enlace.nombre}
+      </Link>
+    );
+  }
+  return (
+    <a href={enlace.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
+      {enlace.nombre}
+    </a>
+  );
+}
+
+function IconoRed({ nombre }: { nombre: string }) {
+  const clave = nombre.toLowerCase();
+  if (clave.includes('facebook')) return <Facebook className="w-5 h-5" />;
+  if (clave.includes('instagram')) return <Instagram className="w-5 h-5" />;
+  if (clave.includes('whatsapp')) return <MessageCircle className="w-5 h-5" />;
+  return <Globe className="w-5 h-5" />;
+}
+
+function enlaceTelefono(valor: string) {
+  const digitos = soloDigitos(valor);
+  return digitos.length === 10 ? `tel:+52${digitos}` : `tel:${digitos}`;
+}
+
+function enlaceWhatsapp(valor: string) {
+  const digitos = soloDigitos(valor);
+  return `https://wa.me/${digitos.length === 10 ? `52${digitos}` : digitos}`;
+}
 
 export function Footer() {
+  const { status, config } = useFooter();
+  // Si la consulta falla o aún carga, se muestran solo los elementos fijos.
+  const { acerca, ayuda, contacto, redes } = status === 'ready' ? config : CONFIG_SOLO_FIJOS;
+  const whatsapp = contacto.whatsapp.trim();
+
   return (
     <footer className="bg-white border-t mt-16">
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
@@ -17,26 +59,11 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Acerca de Autex</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>
-                <Link to="/terminos-condiciones" className="hover:text-blue-600">
-                  Términos y condiciones
-                </Link>
-              </li>
-              <li>
-                <Link to="/quienes-somos" className="hover:text-blue-600">
-                  ¿Quiénes somos?
-                </Link>
-              </li>
-              <li>
-                <a href="https://empleos.apymsa.com.mx/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">
-                  Bolsa de trabajo
-                </a>
-              </li>
-              <li>
-                <Link to="/avisos-privacidad" className="hover:text-blue-600">
-                  Avisos de privacidad
-                </Link>
-              </li>
+              {acerca.map((enlace) => (
+                <li key={enlace.id}>
+                  <EnlaceFooter enlace={enlace} />
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -44,31 +71,11 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Ayuda</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>
-                <Link to="/preguntas-frecuentes" className="hover:text-blue-600">
-                  Preguntas frecuentes
-                </Link>
-              </li>
-              <li>
-                <Link to="/facturacion" className="hover:text-blue-600">
-                  Facturación
-                </Link>
-              </li>
-              <li>
-                <Link to="/garantias-devoluciones" className="hover:text-blue-600">
-                  Garantías y devoluciones
-                </Link>
-              </li>
-              <li>
-                <Link to="/como-comprar" className="hover:text-blue-600">
-                  ¿Cómo comprar en Autex?
-                </Link>
-              </li>
-              <li>
-                <Link to="/rastreo-pedido" className="hover:text-blue-600">
-                  Rastrea tu pedido
-                </Link>
-              </li>
+              {ayuda.map((enlace) => (
+                <li key={enlace.id}>
+                  <EnlaceFooter enlace={enlace} />
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -76,12 +83,35 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Contáctanos</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>33 3208 4440</li>
-              <li>33 1602 5603</li>
-              <li>contacto@autex.com.mx</li>
+              {contacto.telefono1.trim() && (
+                <li>
+                  <a href={enlaceTelefono(contacto.telefono1)} className="hover:text-blue-600">
+                    {contacto.telefono1}
+                  </a>
+                </li>
+              )}
+              {whatsapp && (
+                <li>
+                  <a
+                    href={enlaceWhatsapp(whatsapp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-blue-600"
+                  >
+                    WhatsApp {whatsapp}
+                  </a>
+                </li>
+              )}
+              {contacto.email.trim() && (
+                <li>
+                  <a href={`mailto:${contacto.email.trim()}`} className="hover:text-blue-600">
+                    {contacto.email}
+                  </a>
+                </li>
+              )}
               <li>
-                <Link to="/sucursales" className="hover:text-blue-600">
-                  Localiza tu tienda
+                <Link to={ENLACE_LOCALIZA_TIENDA.url} className="hover:text-blue-600">
+                  {ENLACE_LOCALIZA_TIENDA.nombre}
                 </Link>
               </li>
             </ul>
@@ -142,28 +172,34 @@ export function Footer() {
           {/* Social media */}
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">Síguenos</span>
-            <a href="#" className="text-gray-600 hover:text-blue-600">
-              <Facebook className="w-5 h-5" />
-            </a>
-            <a href="#" className="text-gray-600 hover:text-blue-600">
-              <Instagram className="w-5 h-5" />
-            </a>
-            <a href="#" className="text-gray-600 hover:text-blue-600">
-              <MessageCircle className="w-5 h-5" />
-            </a>
+            {redes.map((red) => (
+              <a
+                key={red.id}
+                href={red.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={red.nombre}
+                className="text-gray-600 hover:text-blue-600"
+              >
+                <IconoRed nombre={red.nombre} />
+              </a>
+            ))}
           </div>
         </div>
       </div>
 
       {/* WhatsApp floating button */}
-      <a
-        href="https://wa.me/523332084440"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 md:bottom-8 right-6 md:right-8 bg-green-500 text-white rounded-full p-3 md:p-4 shadow-lg hover:bg-green-600 transition-colors z-40"
-      >
-        <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
-      </a>
+      {whatsapp && (
+        <a
+          href={enlaceWhatsapp(whatsapp)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="WhatsApp"
+          className="fixed bottom-6 md:bottom-8 right-6 md:right-8 bg-green-500 text-white rounded-full p-3 md:p-4 shadow-lg hover:bg-green-600 transition-colors z-40"
+        >
+          <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
+        </a>
+      )}
     </footer>
   );
 }

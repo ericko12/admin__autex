@@ -2,6 +2,7 @@ import { RouterProvider } from 'react-router';
 import { AuthProvider } from './context/AuthContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { CartProvider } from './context/CartContext';
+import { FooterProvider } from './context/FooterContext';
 import { router } from './routes';
 
 export default function App() {
@@ -9,7 +10,9 @@ export default function App() {
     <AuthProvider>
       <AdminAuthProvider>
         <CartProvider>
-          <RouterProvider router={router} />
+          <FooterProvider>
+            <RouterProvider router={router} />
+          </FooterProvider>
         </CartProvider>
       </AdminAuthProvider>
     </AuthProvider>
