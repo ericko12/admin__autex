@@ -1,6 +1,7 @@
 import type { FooterContacto, FooterLink } from '../context/FooterContext';
 
 export const MSG = {
+  campoRequerido: 'Este campo es obligatorio.',
   nombreRequerido: 'El nombre es obligatorio.',
   destinoRequerido: 'El destino es obligatorio.',
   destinoInvalido: 'Usa el formato /nombre-seccion o https://...',
@@ -80,16 +81,22 @@ export function validarEnlaces(enlaces: FooterLink[]): Record<string, ErroresEnl
 
 export type ErroresContacto = Partial<Record<keyof FooterContacto, string>>;
 
-/** Los datos de contacto son opcionales; si se capturan, deben tener formato válido. */
+/** Los tres datos de contacto son obligatorios y deben tener formato válido. */
 export function validarContacto(contacto: FooterContacto): ErroresContacto {
   const errores: ErroresContacto = {};
-  if (contacto.telefono1.trim() && soloDigitos(contacto.telefono1).length !== 10) {
+  if (!contacto.telefono1.trim()) {
+    errores.telefono1 = MSG.campoRequerido;
+  } else if (soloDigitos(contacto.telefono1).length !== 10) {
     errores.telefono1 = MSG.telefonoInvalido;
   }
-  if (contacto.whatsapp.trim() && soloDigitos(contacto.whatsapp).length !== 10) {
+  if (!contacto.whatsapp.trim()) {
+    errores.whatsapp = MSG.campoRequerido;
+  } else if (soloDigitos(contacto.whatsapp).length !== 10) {
     errores.whatsapp = MSG.telefonoInvalido;
   }
-  if (contacto.email.trim() && !CORREO.test(contacto.email.trim())) {
+  if (!contacto.email.trim()) {
+    errores.email = MSG.campoRequerido;
+  } else if (!CORREO.test(contacto.email.trim())) {
     errores.email = MSG.correoInvalido;
   }
   return errores;
