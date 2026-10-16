@@ -27,6 +27,10 @@ export type FooterStatus = 'loading' | 'error' | 'ready';
 /** Límites por sección (EF-44384, criterio 3). Acerca y Ayuda cuentan los enlaces fijos. */
 export const FOOTER_LIMITES = { acerca: 6, ayuda: 6, redes: 5 } as const;
 
+/** Catálogo permitido. El nombre determina el icono mostrado en el footer. */
+export const CATALOGO_REDES = ['Facebook', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn'] as const;
+export type RedSocial = (typeof CATALOGO_REDES)[number];
+
 export const ENLACES_FIJOS_ACERCA: FooterLink[] = [
   { id: 'fijo-terminos', nombre: 'Términos y condiciones', url: '/terminos-condiciones', fijo: true },
   { id: 'fijo-privacidad', nombre: 'Aviso de privacidad', url: '/avisos-privacidad', fijo: true },
