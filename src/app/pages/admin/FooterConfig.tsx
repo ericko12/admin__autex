@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Save, Plus, Trash2, Lock } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Lock, Music2, Plus, Save, Trash2, Youtube } from 'lucide-react';
 import { Modal } from '../../components/admin/Modal';
 import {
+  CATALOGO_REDES,
   ENLACE_LOCALIZA_TIENDA,
   FOOTER_LIMITES,
   useFooter,
@@ -20,6 +21,15 @@ const MENSAJE_ERROR_CONSULTA =
 const MENSAJE_ERROR_GUARDADO = 'No fue posible guardar los cambios. Intenta nuevamente.';
 const MENSAJE_EXITO = 'Configuración guardada exitosamente';
 const MENSAJE_ELIMINAR = '¿Deseas eliminar este enlace del footer?';
+const MENSAJE_SALIR = 'Tienes cambios sin guardar. ¿Deseas salir y descartarlos?';
+
+const ICONOS_RED = {
+  Facebook,
+  Instagram,
+  TikTok: Music2,
+  YouTube: Youtube,
+  LinkedIn: Linkedin,
+} as const;
 
 const inputBase =
   'w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500';
@@ -232,17 +242,37 @@ export function FooterConfig() {
     [borrador, config],
   );
 
+  useEffect(() => {
+    if (!hayCambios) return;
+    const prevenirSalida = (evento: BeforeUnloadEvent) => evento.preventDefault();
+    const confirmarNavegacion = (evento: MouseEvent) => {
+      const enlace = (evento.target as HTMLElement).closest('a[href]');
+      if (enlace && !window.confirm(MENSAJE_SALIR)) evento.preventDefault();
+    };
+    window.addEventListener('beforeunload', prevenirSalida);
+    document.addEventListener('click', confirmarNavegacion, true);
+    return () => {
+      window.removeEventListener('beforeunload', prevenirSalida);
+      document.removeEventListener('click', confirmarNavegacion, true);
+    };
+  }, [hayCambios]);
+
   const actualizarEnlace = (seccion: Seccion, id: string, campo: 'nombre' | 'url', valor: string) => {
+    setMostrarErrores(true);
     setBorrador((b) =>
       b ? { ...b, [seccion]: b[seccion].map((e) => (e.id === id && !e.fijo ? { ...e, [campo]: valor } : e)) } : b,
     );
   };
 
   const agregarEnlace = (seccion: Seccion) => {
+    setMostrarErrores(true);
     setBorrador((b) => {
       if (!b || b[seccion].length >= FOOTER_LIMITES[seccion]) return b;
       // Los adicionales se agregan al final: orden de creación, sin reordenamiento manual.
-      return { ...b, [seccion]: [...b[seccion], { id: `${seccion}-${crypto.randomUUID()}`, nombre: '', url: '' }] };
+      const nombre = seccion === 'redes'
+        ? CATALOGO_REDES.find((red) => !b.redes.some((actual) => actual.nombre === red)) ?? ''
+        : '';
+      return { ...b, [seccion]: [...b[seccion], { id: `${seccion}-${crypto.randomUUID()}`, nombre, url: '' }] };
     });
   };
 
@@ -256,6 +286,7 @@ export function FooterConfig() {
   };
 
   const actualizarContacto = (campo: keyof FooterContacto, valor: string) => {
+    setMostrarErrores(true);
     setBorrador((b) => (b ? { ...b, contacto: { ...b.contacto, [campo]: valor } } : b));
   };
 
@@ -296,7 +327,7 @@ export function FooterConfig() {
     }
   };
 
-  const puedeGuardar = status === 'ready' && hayCambios && !guardando;
+  const puedeGuardar = status === 'ready' && hayCambios && !hayErrores && !guardando;
 
   const columnas: { seccion: 'acerca' | 'ayuda'; titulo: string }[] = [
     { seccion: 'acerca', titulo: 'Acerca de Autex' },
@@ -388,7 +419,7 @@ export function FooterConfig() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label htmlFor="footer-telefono1" className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono 1
+                  Teléfono <span className="text-red-600" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="footer-telefono1"
@@ -405,7 +436,7 @@ export function FooterConfig() {
 
               <div>
                 <label htmlFor="footer-whatsapp" className="block text-sm font-medium text-gray-700 mb-1">
-                  WhatsApp
+                  WhatsApp <span className="text-red-600" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="footer-whatsapp"
@@ -422,7 +453,7 @@ export function FooterConfig() {
 
               <div>
                 <label htmlFor="footer-email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Correo electrónico
+                  Correo electrónico <span className="text-red-600" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="footer-email"
@@ -466,20 +497,30 @@ export function FooterConfig() {
                 const errores = erroresSecciones.redes[red.id];
                 const errorNombre = mostrarErrores ? errores?.nombre : undefined;
                 const errorUrl = mostrarErrores ? errores?.url : undefined;
+                const Icono = ICONOS_RED[red.nombre as keyof typeof ICONOS_RED] ?? Facebook;
                 return (
                   <div key={red.id} className="flex gap-2">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <input
-                          type="text"
+                      <div className="relative">
+                        <Icono className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" aria-hidden="true" />
+                        <select
                           value={red.nombre}
                           onChange={(e) => actualizarEnlace('redes', red.id, 'nombre', e.target.value)}
-                          placeholder="Nombre de la red social (ej: Facebook, Instagram)"
                           aria-label="Nombre de la red social"
                           aria-invalid={!!errorNombre}
                           aria-describedby={errorNombre ? `${red.id}-nombre-error` : undefined}
-                          className={claseInput(errorNombre)}
-                        />
+                          className={`${claseInput(errorNombre)} pl-9`}
+                        >
+                          {CATALOGO_REDES.map((opcion) => (
+                            <option
+                              key={opcion}
+                              value={opcion}
+                              disabled={opcion !== red.nombre && borrador.redes.some((otra) => otra.nombre === opcion)}
+                            >
+                              {opcion}
+                            </option>
+                          ))}
+                        </select>
                         <MensajeError id={`${red.id}-nombre-error`} texto={errorNombre} />
                       </div>
                       <div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Facebook, Globe, Instagram, MessageCircle } from 'lucide-react';
+import { Facebook, Globe, Instagram, Linkedin, MessageCircle, Music2, Youtube } from 'lucide-react';
 import autexLogo from 'figma:asset/e4a51ee4a49c3f2fe023ab4e73b1a904ebde460b.png';
 import { CONFIG_SOLO_FIJOS, ENLACE_LOCALIZA_TIENDA, useFooter } from '../context/FooterContext';
 import type { FooterLink } from '../context/FooterContext';
@@ -25,7 +25,9 @@ function IconoRed({ nombre }: { nombre: string }) {
   const clave = nombre.toLowerCase();
   if (clave.includes('facebook')) return <Facebook className="w-5 h-5" />;
   if (clave.includes('instagram')) return <Instagram className="w-5 h-5" />;
-  if (clave.includes('whatsapp')) return <MessageCircle className="w-5 h-5" />;
+  if (clave.includes('tiktok')) return <Music2 className="w-5 h-5" />;
+  if (clave.includes('youtube')) return <Youtube className="w-5 h-5" />;
+  if (clave.includes('linkedin')) return <Linkedin className="w-5 h-5" />;
   return <Globe className="w-5 h-5" />;
 }
 
